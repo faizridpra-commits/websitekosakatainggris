@@ -1,2 +1,0 @@
-# websitekosakatainggris
-Web
