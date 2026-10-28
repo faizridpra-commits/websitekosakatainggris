@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kosakata Climate & Akademik – SRS</title>
+<meta name="theme-color" content="#2f7d5b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kosakata">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f6f7f4; --card:#ffffff; --ink:#1d2a24; --muted:#6a7a72; --line:#e0e5e0;
+  --accent:#2f7d5b; --accent-ink:#ffffff; --accent-soft:#e3f1ea;
+  --bad:#c0392b; --bad-soft:#fbe9e7; --warn:#c77d12; --good:#2f7d5b;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#141a17; --card:#1d2622; --ink:#e8efe9; --muted:#93a39a; --line:#2c3833;
+    --accent:#4fb283; --accent-ink:#0e1713; --accent-soft:#22362d; --bad:#e8786b; --bad-soft:#3a2420; --warn:#e0a24a; --good:#4fb283; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 14px;flex-wrap:wrap}
+h1{font-size:1.25rem;margin:0}
+h1 small{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
+nav{display:flex;gap:6px}
+nav button{background:transparent;border:1px solid var(--line);color:var(--ink);padding:7px 14px;border-radius:999px;cursor:pointer;font-size:.9rem}
+nav button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.card h2{margin:0 0 10px;font-size:1rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.stat{background:var(--accent-soft);border-radius:12px;padding:12px}
+.stat b{display:block;font-size:1.5rem}
+.stat span{color:var(--muted);font-size:.8rem}
+button.btn{background:var(--accent);color:var(--accent-ink);border:0;padding:11px 18px;border-radius:12px;font-size:1rem;cursor:pointer;font-weight:600}
+button.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
+button.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+label{font-size:.85rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+select,input[type=number],input[type=text]{padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:1rem}
+.drop{border:2px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted);cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.progress{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:14px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+.flash{min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;cursor:pointer;user-select:none}
+.flash .tag{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.flash .word{font-size:2rem;font-weight:700;overflow-wrap:anywhere}
+.flash .ans{font-size:1.5rem;color:var(--accent);font-weight:600;overflow-wrap:anywhere}
+.flash .hint{color:var(--muted);font-size:.85rem}
+.badge{display:inline-block;background:var(--accent-soft);color:var(--accent);padding:2px 10px;border-radius:99px;font-size:.75rem;font-weight:600}
+.rate{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.rate button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 4px;border-radius:12px;cursor:pointer;font-size:.9rem}
+.rate button small{display:block;color:var(--muted);font-size:.72rem}
+.rate .r0{border-color:var(--bad);color:var(--bad)}
+.rate .r3{border-color:var(--accent);color:var(--accent)}
+.opts{display:grid;gap:8px;margin-top:12px}
+.opts button{text-align:left;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:1rem;cursor:pointer}
+.opts button.ok{background:var(--accent-soft);border-color:var(--good)}
+.opts button.no{background:var(--bad-soft);border-color:var(--bad)}
+.msg{padding:10px 14px;border-radius:10px;background:var(--accent-soft);margin-bottom:12px;font-size:.9rem}
+.msg.err{background:var(--bad-soft);color:var(--bad)}
+.feedback{margin-top:10px;font-weight:600}
+.feedback.ok{color:var(--good)} .feedback.no{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.bars{display:flex;gap:6px;align-items:flex-end;height:80px;margin-top:6px}
+.bars div{flex:1;text-align:center;font-size:.7rem;color:var(--muted)}
+.bars i{display:block;background:var(--accent);border-radius:4px 4px 0 0;min-height:2px;margin-bottom:3px}
+.muted{color:var(--muted);font-size:.85rem}
+.center{text-align:center}
+.opts button.sel{border-color:var(--accent);background:var(--accent-soft)}
+.scorebig{font-size:4rem;font-weight:800;color:var(--accent);line-height:1.1}
+td.tok{color:var(--good);font-weight:600} td.tno{color:var(--bad);font-weight:600}
+html{-webkit-text-size-adjust:100%}
+button,.drop,a.btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+a.btn{text-decoration:none;display:inline-block;text-align:center;background:transparent;color:var(--ink);border:1px solid var(--line);padding:11px 18px;border-radius:12px;font-size:1rem;font-weight:500}
+@media (max-width:600px){
+  .wrap{padding:12px 12px calc(88px + env(safe-area-inset-bottom))}
+  header{margin:4px 0 10px}
+  h1{font-size:1.1rem}
+  nav{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--card);border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom));gap:8px}
+  nav button{flex:1;border-radius:12px;padding:13px 6px;font-size:.95rem}
+  body.kb nav{display:none}
+  .card{padding:14px;border-radius:14px}
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .row label{flex:1 1 100%}
+  .row select,.row input[type=number]{width:100%}
+  .row .btn{flex:1 1 auto}
+  .flash{min-height:200px}
+  .flash .word{font-size:1.7rem}
+  .flash .ans{font-size:1.3rem}
+  .rate{grid-template-columns:repeat(2,1fr)}
+  .rate button{padding:15px 6px;font-size:1rem}
+  .opts button{padding:15px 14px}
+  .scorebig{font-size:3.4rem}
+  td,th{padding:6px 4px;font-size:.82rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Kosakata Climate & Akademik<small>50 kata baru/hari · kartu ulang berjarak (spaced repetition)</small></h1>
+    <nav>
+      <button data-v="home">Beranda</button>
+      <button data-v="study">Belajar</button>
+      <button data-v="test">Tes Acak</button>
+    </nav>
+  </header>
+  <div id="msg"></div>
+  <div id="app"></div>
+</div>
+
+<script>
+(function(){
+const KEY='vocabSRS_v1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function today(){const d=new Date();return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);}
+
+let deck={cards:[],settings:{perDay:50,dir:'mix'}};
+try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&d.cards)deck=Object.assign(deck,d);}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(deck));}catch(e){}}
+
+let view='home', S=null, T=null;
+
+function toast(t,err){const m=$('#msg');m.innerHTML=t?`<div class="msg ${err?'err':''}">${esc(t)}</div>`:'';if(t)setTimeout(()=>{if(m.firstChild&&m.textContent===t)m.innerHTML='';},6000);}
+
+/* ---------- SRS ---------- */
+function sched(c,r){
+  let {ease,ivl,reps,lapses}=c;
+  if(r===0){lapses++;reps=0;ivl=0;ease=Math.max(1.3,ease-0.2);}
+  else{
+    if(r===1){ivl=reps===0?1:Math.max(ivl+1,Math.round(ivl*1.2));ease=Math.max(1.3,ease-0.15);}
+    else if(r===2){ivl=reps===0?1:reps===1?3:Math.round(ivl*ease);}
+    else{ivl=reps===0?4:Math.max(ivl+2,Math.round(ivl*ease*1.3));ease+=0.15;}
+    reps++;ivl=Math.min(ivl,365);
+  }
+  return {ease,ivl,reps,lapses,due:today()+ivl};
+}
+function applyGrade(c,r){
+  const u=sched(c,r);Object.assign(c,u);
+  if(c.intro==null)c.intro=today();
+  save();
+}
+function newQuota(){return Math.max(0,deck.settings.perDay-deck.cards.filter(c=>c.intro===today()).length);}
+function dueCards(){const t=today();return deck.cards.filter(c=>c.intro!=null&&c.due<=t);}
+function newCards(){return deck.cards.filter(c=>c.intro==null).slice(0,newQuota());}
+
+/* ---------- Import ---------- */
+function parseRows(rows){
+  rows=rows.filter(r=>r&&r.some(x=>String(x).trim()!==''));
+  if(!rows.length)return [];
+  let ci=0,ei=1,start=0;
+  const h=rows[0].map(x=>String(x).toLowerCase().trim());
+  const iIdx=h.findIndex(x=>/indo|^id$|^bahasa$/.test(x));
+  const eIdx=h.findIndex(x=>/ingg|engl|^en$/.test(x));
+  if(iIdx>=0&&eIdx>=0&&iIdx!==eIdx){ci=iIdx;ei=eIdx;start=1;}
+  else if(iIdx>=0||eIdx>=0){start=1;}
+  const out=[];
+  for(let i=start;i<rows.length;i++){
+    const id=String(rows[i][ci]??'').trim(),en=String(rows[i][ei]??'').trim();
+    if(id&&en)out.push({id,en});
+  }
+  return out;
+}
+function importWords(list){
+  const have=new Set(deck.cards.map(c=>norm(c.id)+'|'+norm(c.en)));
+  let add=0,skip=0;
+  for(const w of list){
+    const k=norm(w.id)+'|'+norm(w.en);
+    if(have.has(k)){skip++;continue;}
+    have.add(k);add++;
+    deck.cards.push({k,id:w.id,en:w.en,ease:2.5,ivl:0,reps:0,lapses:0,due:null,intro:null});
+  }
+  save();
+  toast(`${add} kata ditambahkan${skip?`, ${skip} sudah ada/duplikat dilewati`:''}. Total: ${deck.cards.length} kata.`);
+  render();
+}
+function handleFile(f){
+  if(!f)return;
+  if(typeof XLSX==='undefined'){toast('Library Excel belum termuat (butuh internet untuk pertama kali). Coba muat ulang halaman.',true);return;}
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      const list=parseRows(rows);
+      if(!list.length){toast('Tidak ada pasangan kata yang terbaca. Pastikan ada 2 kolom: Indonesia & Inggris.',true);return;}
+      importWords(list);
+    }catch(err){toast('Gagal membaca file: '+err.message,true);}
+  };
+  rd.readAsArrayBuffer(f);
+}
+function downloadTemplate(){
+  if(typeof XLSX==='undefined'){toast('Library Excel belum termuat.',true);return;}
+  const rows=[['Indonesia','Inggris'],
+  ['pemanasan global','global warming'],['emisi karbon','carbon emissions'],['keanekaragaman hayati','biodiversity'],
+  ['mitigasi','mitigation'],['adaptasi','adaptation'],['ketahanan','resilience'],['berkelanjutan','sustainable'],
+  ['hipotesis','hypothesis'],['metodologi','methodology'],['menganalisis','to analyze'],['kesimpulan','conclusion'],['kajian pustaka','literature review']];
+  const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:28},{wch:28}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Kosakata');
+  XLSX.writeFile(wb,'template-kosakata.xlsx');
+}
+function exportProgress(){
+  const b=new Blob([JSON.stringify(deck)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='progress-kosakata.json';a.click();
+}
+function importProgress(f){
+  const rd=new FileReader();
+  rd.onload=e=>{try{const d=JSON.parse(e.target.result);if(!d.cards)throw new Error('format salah');deck=Object.assign(deck,d);save();toast('Progres dipulihkan.');render();}catch(err){toast('File progres tidak valid.',true);}};
+  rd.readAsText(f);
+}
+
+/* ---------- Views ---------- */
+function setView(v){view=v;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));render();}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  if(b.dataset.v==='study'&&!(S&&S.queue.length))startStudy(); else if(b.dataset.v==='test'){T=null;}
+  setView(b.dataset.v);
+});
+
+function render(){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));
+  if(view==='home')renderHome();else if(view==='study')renderStudy();else renderTest();
+}
+
+function renderHome(){
+  const t=today(),n=deck.cards.length;
+  const learned=deck.cards.filter(c=>c.intro!=null).length;
+  const due=dueCards().length,introToday=deck.cards.filter(c=>c.intro===t).length;
+  const mature=deck.cards.filter(c=>c.ivl>=21).length;
+  const quota=newQuota(),avail=newCards().length;
+  const fc=[];for(let i=0;i<7;i++)fc.push(deck.cards.filter(c=>c.intro!=null&&c.due===t+i+(i===0?0:0)).length);
+  fc[0]=due;
+  const mx=Math.max(1,...fc);
+  const days=['Hari ini','+1','+2','+3','+4','+5','+6'];
+  $('#app').innerHTML=`
+  <div class="card">
+    <h2>1. Masukkan file Excel</h2>
+    <div class="drop" id="drop">Klik atau seret file <b>.xlsx</b> ke sini<br><span class="muted">Kolom 1: Bahasa Indonesia · Kolom 2: Bahasa Inggris (baris header boleh ada)</span></div>
+    <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
+    <div class="row" style="margin-top:10px"><button class="btn sec" id="tpl">Unduh template Excel</button><a class="btn sec" href="kosakata-1-77.xlsx" download>Unduh contoh (77 kata)</a></div>
+  </div>
+  <div class="card">
+    <h2>2. Target hari ini</h2>
+    <div class="grid">
+      <div class="stat"><b>${n}</b><span>Total kata</span></div>
+      <div class="stat"><b>${introToday}/${deck.settings.perDay}</b><span>Kata baru hari ini</span></div>
+      <div class="stat"><b>${due}</b><span>Jatuh tempo ulang</span></div>
+      <div class="stat"><b>${mature}</b><span>Hafal kuat (≥21 hr)</span></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <label>Kata baru per hari<input type="number" id="perDay" min="1" max="500" value="${deck.settings.perDay}"></label>
+      <label>Arah kartu<select id="dir">
+        <option value="mix">Acak (ID↔EN)</option>
+        <option value="id-en">Indonesia → Inggris</option>
+        <option value="en-id">Inggris → Indonesia</option></select></label>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn" id="go" ${n?'':'disabled'}>Mulai belajar (${due} ulang + ${Math.min(quota,avail)} baru)</button>
+      <button class="btn sec" id="gotest" ${learned||n?'':'disabled'}>Tes acak</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Jadwal ulang 7 hari ke depan</h2>
+    <div class="bars">${fc.map((v,i)=>`<div><i style="height:${Math.round(v/mx*60)}px"></i>${v}<br>${days[i]}</div>`).join('')}</div>
+  </div>
+  <div class="card">
+    <h2>Data & progres</h2>
+    <div class="row">
+      <button class="btn sec" id="exp">Ekspor progres</button>
+      <button class="btn sec" id="imp">Impor progres</button>
+      <button class="btn sec" id="reset">Hapus semua data</button>
+    </div>
+    <input type="file" id="pfile" accept=".json" hidden>
+    <p class="muted">Progres tersimpan otomatis di browser ini. Ekspor untuk cadangan atau pindah perangkat.</p>
+  </div>`;
+  $('#dir').value=deck.settings.dir;
+  const drop=$('#drop'),file=$('#file');
+  drop.onclick=()=>file.click();
+  file.onchange=()=>{handleFile(file.files[0]);file.value='';};
+  drop.ondragover=e=>{e.preventDefault();drop.classList.add('over');};
+  drop.ondragleave=()=>drop.classList.remove('over');
+  drop.ondrop=e=>{e.preventDefault();drop.classList.remove('over');handleFile(e.dataTransfer.files[0]);};
+  $('#tpl').onclick=downloadTemplate;
+  $('#perDay').onchange=e=>{deck.settings.perDay=Math.max(1,Math.min(500,+e.target.value||50));save();render();};
+  $('#dir').onchange=e=>{deck.settings.dir=e.target.value;save();};
+  $('#go').onclick=()=>{startStudy();setView('study');};
+  $('#gotest').onclick=()=>{T=null;setView('test');};
+  $('#exp').onclick=exportProgress;
+  $('#imp').onclick=()=>$('#pfile').click();
+  $('#pfile').onchange=e=>{if(e.target.files[0])importProgress(e.target.files[0]);};
+  $('#reset').onclick=()=>{if(confirm('Hapus semua kata dan progres?')){deck={cards:[],settings:deck.settings};save();S=null;T=null;render();}};
+}
+
+/* ---------- Study ---------- */
+function pickDir(){const d=deck.settings.dir;return d==='mix'?(Math.random()<.5?'id-en':'en-id'):d;}
+function startStudy(){
+  const q=shuffle([...dueCards(),...newCards()]).map(c=>({c,dir:pickDir(),isNew:c.intro==null}));
+  S={queue:q,total:q.length,done:0,flipped:false,again:0};
+}
+function ivlLabel(c,r){const u=sched(c,r);return r===0?'ulang lagi':(u.ivl===1?'1 hari':u.ivl+' hari');}
+function renderStudy(){
+  if(!S)startStudy();
+  const a=$('#app');
+  if(!deck.cards.length){a.innerHTML=`<div class="card center">Belum ada kata. Unggah file Excel dulu di Beranda.</div>`;return;}
+  if(!S.queue.length){
+    a.innerHTML=`<div class="card center"><h2>🎉 Sesi selesai</h2>
+      <p>${S.total?`${S.done} kartu selesai (${S.again}× salah/ulang).`:'Tidak ada kartu yang perlu dipelajari sekarang.'}</p>
+      <div class="row" style="justify-content:center"><button class="btn" id="tes">Tes acak sekarang</button><button class="btn sec" id="home">Beranda</button></div></div>`;
+    $('#tes').onclick=()=>{T=null;setView('test');};$('#home').onclick=()=>setView('home');return;
+  }
+  const it=S.queue[0],c=it.c;
+  const q=it.dir==='id-en'?c.id:c.en,ans=it.dir==='id-en'?c.en:c.id;
+  const pct=S.total?Math.round(S.done/S.total*100):0;
+  a.innerHTML=`<div class="progress"><i style="width:${pct}%"></i></div>
+  <div class="muted" style="margin-bottom:8px">${S.done}/${S.total} selesai · sisa antrean ${S.queue.length}</div>
+  <div class="card flash" id="fc">
+    <span class="tag">${it.dir==='id-en'?'Indonesia':'English'} ${it.isNew?'<span class="badge">Baru</span>':''}</span>
+    <div class="word">${esc(q)}</div>
+    ${S.flipped?`<div class="tag">${it.dir==='id-en'?'English':'Indonesia'}</div><div class="ans">${esc(ans)}</div>`:`<div class="hint">Ketuk kartu / tekan Spasi untuk melihat jawaban</div>`}
+  </div>
+  ${S.flipped?`<div class="rate">
+    <button class="r0" data-r="0">Lupa<small>${ivlLabel(c,0)}</small></button>
+    <button data-r="1">Sulit<small>${ivlLabel(c,1)}</small></button>
+    <button data-r="2">Bisa<small>${ivlLabel(c,2)}</small></button>
+    <button class="r3" data-r="3">Mudah<small>${ivlLabel(c,3)}</small></button></div>`:
+    `<div class="row"><button class="btn" id="flip" style="width:100%">Tampilkan jawaban</button></div>`}`;
+  const flip=()=>{S.flipped=true;renderStudy();};
+  $('#fc').onclick=()=>{if(!S.flipped)flip();};
+  if($('#flip'))$('#flip').onclick=flip;
+  document.querySelectorAll('.rate button').forEach(b=>b.onclick=()=>rate(+b.dataset.r));
+}
+function rate(r){
+  const it=S.queue.shift();
+  applyGrade(it.c,r);
+  if(r===0){S.again++;it.isNew=false;it.dir=pickDir();S.queue.splice(Math.min(S.queue.length,3),0,it);}
+  else S.done++;
+  S.flipped=false;renderStudy();
+}
+
+/* ---------- Test ---------- */
+function answersOf(c,dir){return dir==='id-en'?c.en:c.id;}
+function accepted(txt){
+  const set=new Set([norm(txt)]);
+  txt.split(/[\/;,]/).forEach(p=>set.add(norm(p)));
+  set.add(norm(txt.replace(/\([^)]*\)/g,'')));
+  txt.split(/[\/;,]/).forEach(p=>set.add(norm(p.replace(/\([^)]*\)/g,''))));
+  set.delete('');return set;
+}
+function lev(a,b){const m=a.length,n=b.length,d=[];for(let i=0;i<=m;i++)d[i]=[i];for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n];}
+const stripA=s=>s.replace(/^(to|a|an|the) /,'');
+function judge(user,right,tol){
+  const v=norm(user);if(!v)return{ok:false};
+  const acc=new Set();accepted(right).forEach(x=>{acc.add(x);acc.add(stripA(x));});
+  if(acc.has(v)||acc.has(stripA(v)))return{ok:true};
+  if(tol){for(const x of acc){if(x.length>=5&&lev(v,x)<=1)return{ok:true,near:true};}}
+  return{ok:false};
+}
+function makeItem(c,cfg){
+  const dir=cfg.dir==='mix'?(Math.random()<.5?'id-en':'en-id'):cfg.dir;
+  const o={c,dir,user:null,ok:false,near:false,done:false};
+  if(cfg.mode==='mc'){
+    const right=answersOf(c,dir),seen=new Set([norm(right)]),d=[];
+    for(const x of shuffle(deck.cards)){
+      if(x===c)continue;const t=answersOf(x,dir),k=norm(t);
+      if(seen.has(k))continue;seen.add(k);d.push(t);if(d.length>=3)break;
+    }
+    o.opts=shuffle([right,...d]);
+  }
+  return o;
+}
+function buildTest(cfg){
+  let pool,apply=false;
+  if(cfg.pool==='today'){pool=[...dueCards(),...newCards()];apply=true;}
+  else if(cfg.pool==='learned')pool=deck.cards.filter(c=>c.intro!=null);
+  else pool=deck.cards.slice();
+  if(!pool.length)return null;
+  pool=shuffle(pool);
+  if(cfg.pool!=='today')pool=pool.slice(0,cfg.count);
+  return {items:pool.map(c=>makeItem(c,cfg)),i:0,cfg,apply,finished:false};
+}
+function gradeItem(it,cfg){
+  const right=answersOf(it.c,it.dir);
+  if(cfg.mode==='mc'){it.ok=it.user!=null&&norm(it.user)===norm(right);it.near=false;}
+  else{const j=judge(it.user||'',right,cfg.tol);it.ok=j.ok;it.near=!!j.near;}
+  it.done=true;
+}
+function finalize(){
+  T.items.forEach(it=>{if(!it.done)gradeItem(it,T.cfg);});
+  T.correct=T.items.filter(x=>x.ok).length;
+  T.pct=Math.round(T.correct/T.items.length*100);
+  if(T.apply)T.items.forEach(it=>applyGrade(it.c,it.ok?2:0));
+  deck.history=(deck.history||[]).concat([{t:Date.now(),correct:T.correct,n:T.items.length,pct:T.pct,exam:!!T.cfg.exam,mode:T.cfg.mode}]).slice(-30);
+  save();
+  T.finished=true;renderTest();
+}
+function renderTest(){
+  const a=$('#app');
+  if(!deck.cards.length){a.innerHTML=`<div class="card center">Belum ada kata. Unggah file Excel dulu di Beranda.</div>`;return;}
+
+  /* ----- Setup ----- */
+  if(!T){
+    const n=deck.cards.length,learned=deck.cards.filter(c=>c.intro!=null).length;
+    const hist=(deck.history||[]).slice(-5).reverse();
+    a.innerHTML=`<div class="card"><h2>Tes acak</h2>
+      <p class="muted">Urutan soal, arah, dan pilihan jawaban diacak setiap kali tes dimulai. Jawabanmu diperiksa otomatis lalu diberi skor 0–100.</p>
+      <div class="row">
+        <label>Soal dari<select id="pool">
+          <option value="all">Semua kata di file (${n}) – latihan bebas</option>
+          <option value="learned">Kata yang sudah dipelajari (${learned}) – latihan bebas</option>
+          <option value="today">Sesi hari ini (baru + jatuh tempo) – memengaruhi jadwal ulang</option></select></label>
+        <label>Jumlah soal<input type="number" id="cnt" min="1" max="${n}" value="${Math.min(30,n)}"></label>
+        <label>Format jawaban<select id="mode"><option value="type">Ketik jawaban</option><option value="mc">Pilihan ganda</option></select></label>
+        <label>Arah<select id="tdir"><option value="mix">Acak (ID↔EN)</option><option value="id-en">Indonesia → Inggris</option><option value="en-id">Inggris → Indonesia</option></select></label>
+        <label>Pemeriksaan<select id="exam"><option value="0">Langsung per soal</option><option value="1">Ujian: diperiksa di akhir</option></select></label>
+      </div>
+      <label style="flex-direction:row;align-items:center;gap:8px;margin-top:12px"><input type="checkbox" id="tol"> Toleransi typo 1 huruf (untuk kata ≥5 huruf, hanya mode ketik)</label>
+      <div class="row" style="margin-top:14px"><button class="btn" id="start">Mulai tes</button></div></div>
+      ${hist.length?`<div class="card"><h2>Riwayat skor terakhir</h2><table>
+        <tr><th>Tanggal</th><th>Skor</th><th>Benar</th><th>Mode</th></tr>
+        ${hist.map(h=>`<tr><td>${esc(new Date(h.t).toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}))}</td><td><b>${h.pct}</b></td><td>${h.correct}/${h.n}</td><td>${h.mode==='mc'?'Pilihan ganda':'Ketik'}${h.exam?' · ujian':''}</td></tr>`).join('')}
+      </table></div>`:''}`;
+    $('#start').onclick=()=>{
+      const t=buildTest({pool:$('#pool').value,mode:$('#mode').value,dir:$('#tdir').value,count:Math.max(1,Math.min(n,+$('#cnt').value||20)),exam:$('#exam').value==='1',tol:$('#tol').checked});
+      if(!t){toast('Tidak ada kata untuk dites. Pilih sumber soal lain.',true);return;}
+      T=t;renderTest();
+    };
+    return;
+  }
+
+  /* ----- Hasil ----- */
+  if(T.finished){
+    const n=T.items.length;
+    const label=T.pct>=90?'Luar biasa! 🎉':T.pct>=75?'Bagus!':T.pct>=60?'Cukup, terus latihan':'Perlu diulang lagi';
+    const wrong=T.items.filter(x=>!x.ok);
+    a.innerHTML=`<div class="card center"><div class="muted">Skor kamu</div><div class="scorebig">${T.pct}</div>
+      <div>${T.correct} benar · ${n-T.correct} salah · dari ${n} soal</div><div class="muted" style="margin-top:4px">${label}</div></div>
+      <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h2 style="margin:0">Pembahasan</h2>
+        <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="onlyw"> hanya yang salah</label></div>
+        <div style="overflow-x:auto"><table>
+          <tr><th>#</th><th>Soal</th><th>Jawabanmu</th><th>Jawaban benar</th><th></th></tr>
+          ${T.items.map((it,i)=>{const q=it.dir==='id-en'?it.c.id:it.c.en;const u=(it.user==null||String(it.user).trim()==='')?'—':it.user;
+            return `<tr data-ok="${it.ok?1:0}"><td>${i+1}</td><td>${esc(q)}</td><td class="${it.ok?'tok':'tno'}">${esc(u)}</td><td>${esc(answersOf(it.c,it.dir))}</td><td>${it.ok?(it.near?'✓ <span class="muted">typo</span>':'✓'):'✗'}</td></tr>`;}).join('')}
+        </table></div></div>
+      <div class="row" style="justify-content:center">
+        <button class="btn" id="retry" ${wrong.length?'':'disabled'}>Ulangi yang salah (${wrong.length})</button>
+        <button class="btn sec" id="again">Tes baru (diacak ulang)</button>
+        <button class="btn sec" id="home">Beranda</button></div>`;
+    $('#onlyw').onchange=e=>document.querySelectorAll('tr[data-ok="1"]').forEach(r=>r.style.display=e.target.checked?'none':'');
+    $('#retry').onclick=()=>{T={items:shuffle(wrong).map(w=>makeItem(w.c,T.cfg)),i:0,cfg:T.cfg,apply:false,finished:false};renderTest();};
+    $('#again').onclick=()=>{T=null;renderTest();};
+    $('#home').onclick=()=>setView('home');
+    return;
+  }
+
+  /* ----- Soal ----- */
+  const it=T.items[T.i],c=it.c,right=answersOf(c,it.dir),q=it.dir==='id-en'?c.id:c.en;
+  const n=T.items.length,exam=!!T.cfg.exam,mc=T.cfg.mode==='mc',last=T.i===n-1;
+  const has=x=>x.user!=null&&String(x.user).trim()!=='';
+  const answered=T.items.filter(has).length,live=T.items.filter(x=>x.ok).length;
+  a.innerHTML=`<div class="progress"><i style="width:${Math.round(T.i/n*100)}%"></i></div>
+  <div class="muted" style="margin-bottom:8px">Soal ${T.i+1}/${n} · ${exam?`terjawab ${answered}`:`benar ${live}`}${exam?' · diperiksa di akhir':''}</div>
+  <div class="card"><div class="muted">Terjemahkan ke ${it.dir==='id-en'?'Inggris':'Indonesia'}</div>
+    <div style="font-size:1.8rem;font-weight:700;margin:6px 0 4px;overflow-wrap:anywhere">${esc(q)}</div>
+    ${mc?`<div class="opts">${it.opts.map((o,i)=>`<button data-i="${i}" class="${exam&&it.user===o?'sel':''}">${esc(o)}</button>`).join('')}</div>`
+      :`<div class="row" style="margin-top:12px"><input type="text" id="ans" style="flex:1" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(it.user||'')}" placeholder="Ketik jawaban…" ${it.done?'disabled':''}>${exam||it.done?'':'<button class="btn" id="chk">Cek</button>'}</div>`}
+    <div id="fb"></div>
+    <div class="row" style="margin-top:12px" id="nav"></div>
+  </div>`;
+
+  const goNext=()=>{if(last)finalize();else{T.i++;renderTest();}};
+  const fb=()=>{
+    $('#fb').innerHTML=`<div class="feedback ${it.ok?'ok':'no'}">${it.ok?(it.near?'Benar ✓ (ada typo kecil — tulisan yang benar: '+esc(right)+')':'Benar ✓'):'Salah ✗ — jawaban: '+esc(right)}</div>
+      <div class="row" style="margin-top:10px"><button class="btn" id="next">${last?'Lihat skor':'Lanjut'}</button></div>`;
+    $('#next').onclick=goNext;$('#next').focus();
+  };
+  if(it.done&&!exam)fb();
+
+  if(mc){
+    document.querySelectorAll('.opts button').forEach(b=>b.onclick=()=>{
+      if(it.done&&!exam)return;
+      const val=it.opts[+b.dataset.i];
+      it.user=val;
+      if(exam){document.querySelectorAll('.opts button').forEach(x=>x.classList.toggle('sel',x===b));return;}
+      gradeItem(it,T.cfg);
+      b.classList.add(it.ok?'ok':'no');
+      if(!it.ok)document.querySelectorAll('.opts button').forEach(x=>{if(norm(it.opts[+x.dataset.i])===norm(right))x.classList.add('ok');});
+      fb();
+    });
+  }else{
+    const inp=$('#ans');if(!it.done)inp.focus();
+    if(!exam){
+      const check=()=>{if(it.done)return;if(!norm(inp.value))return;it.user=inp.value;inp.disabled=true;gradeItem(it,T.cfg);fb();};
+      $('#chk').onclick=check;
+      inp.onkeydown=e=>{if(e.key==='Enter')check();};
+    }
+  }
+
+  if(exam){
+    $('#nav').innerHTML=`${T.i>0?'<button class="btn sec" id="prev">← Sebelumnya</button>':''}<button class="btn" id="nx">${last?'Selesai & periksa':'Lanjut →'}</button>`;
+    const saveCur=()=>{if(!mc){const inp=$('#ans');if(inp)it.user=inp.value;}};
+    const nx=()=>{
+      saveCur();
+      if(last){
+        const un=n-T.items.filter(has).length;
+        if(un>0&&!confirm(un+' soal belum dijawab. Tetap selesaikan dan periksa?'))return;
+        finalize();
+      }else{T.i++;renderTest();}
+    };
+    $('#nx').onclick=nx;
+    if($('#prev'))$('#prev').onclick=()=>{saveCur();T.i--;renderTest();};
+    if(!mc){$('#ans').onkeydown=e=>{if(e.key==='Enter')nx();};}
+  }
+}
+
+/* ---------- Keyboard ---------- */
+document.addEventListener('keydown',e=>{
+  if(view!=='study'||!S||!S.queue.length)return;
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
+  if(!S.flipped&&(e.code==='Space'||e.key==='Enter')){e.preventDefault();S.flipped=true;renderStudy();}
+  else if(S.flipped&&'1234'.includes(e.key)){rate(+e.key-1);}
+});
+
+document.addEventListener('focusin',e=>{if(e.target.tagName==='INPUT'&&e.target.type!=='file'&&e.target.type!=='checkbox')document.body.classList.add('kb');});
+document.addEventListener('focusout',()=>document.body.classList.remove('kb'));
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>{try{navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}});}
+setView('home');
+})();
+</script>
+</body>
+</html>
